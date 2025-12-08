@@ -21,7 +21,7 @@ This project is currently in very early and active development. Features may cha
 
 ## Technology stack
 
-Clack-rs is built with Rust, leveraging the following libraries:
+clack-rs is built with Rust, leveraging the following libraries:
 
 *   **ratatui:** For building the terminal user interface.
 *   **crossterm:** For cross-platform terminal event handling and manipulation.

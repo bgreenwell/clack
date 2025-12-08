@@ -1,0 +1,56 @@
+# Ignore all compiled object files and executables
+/target
+/Cargo.lock # Ignore generated lock file unless explicitly tracking dependencies
+/clack # Ignore the compiled binary if its name is just 'clack'
+
+# IDE and Editor files
+.idea/             # IntelliJ IDEA
+.vscode/           # VS Code
+*.iml              # IntelliJ IDEA
+.DS_Store          # macOS folder metadata
+*.sublime-*        # Sublime Text
+*.swp              # Vim swap files
+*~                 # Emacs backup files
+
+# OS generated files
+.DS_Store
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependencies
+# Cargo manages this file, so commit it prior to publishing your package to crates.io.
+# However, you may want to ignore it during development if you frequently update dependencies.
+# Uncomment the line below if you wish to ignore it during development.
+# Cargo.lock
+
+# Test and coverage
+/fuzz/target
+/fuzz/corpus
+/fuzz/artifacts
+/coverage
+/.build
+/.coverage
+
+# Build artifacts
+*.o
+*.d
+*.rlib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Logs and temporary files
+*.log
+debug.log          # Our specific debug log
+temp-*
+*.tmp
+*.bak
+
+# Documentation
+/doc/html
+
+# Specific project files
+AGENTS.md          # As requested
+assets/*.wav.bak   # Backup copies of audio files

@@ -8,38 +8,38 @@ This project is currently in very early and active development. Features may cha
 
 ## features
 
-*   **distraction-free writing:** A clean interface focused solely on your text.
-*   **typewriter mode:** Keeps the active line vertically centered on the screen, similar to a physical typewriter.
-*   **focus mode:** Dims inactive lines, drawing attention to your current line of thought.
-*   **theming:** Cycle through different visual themes (dark, paper, retro) to suit your preference.
-*   **authentic sounds:** Mechanical keyboard sound effects for key presses, space, backspace, and a carriage return "thunk". Includes a classic end-of-line bell warning.
-*   **fixed-width paper:** Simulates a physical sheet of paper with consistent margins, centered in your terminal.
-*   **basic text editing:** Insert and delete characters, navigate left/right/up/down.
-*   **markdown rendering:** Supports basic inline markdown for bold and italic text.
-*   **file management:** Save and load text files.
-*   **typing statistics:** Displays word and character counts in the footer.
+*   **D**istraction-free writing: A clean interface focused solely on your text.
+*   **T**ypewriter mode: Keeps the active line vertically centered on the screen, similar to a physical typewriter.
+*   **F**ocus mode: Dims inactive lines, drawing attention to your current line of thought.
+*   **T**heming: Cycle through different visual themes (dark, paper, retro) to suit your preference.
+*   **A**uthentic sounds: Mechanical keyboard sound effects for key presses, space, backspace, and a carriage return "thunk". Includes a classic end-of-line bell warning.
+*   **F**ixed-width paper: Simulates a physical sheet of paper with consistent margins, centered in your terminal.
+*   **B**asic text editing: Insert and delete characters, navigate left/right/up/down.
+*   **M**arkdown rendering: Supports basic inline markdown for bold and italic text.
+*   **F**ile management: Save and load text files.
+*   **T**yping statistics: Displays word and character counts in the footer.
 
 ## technology stack
 
 Clack-rs is built with Rust, leveraging the following libraries:
 
-*   **ratatui:** For building the terminal user interface.
-*   **crossterm:** For cross-platform terminal event handling and manipulation.
-*   **ropey:** An efficient text buffer (rope data structure) for robust text editing.
-*   **rodio:** For audio playback of sound effects.
-*   **anyhow:** For simplified error handling.
+*   **R**atatui: For building the terminal user interface.
+*   **C**rossterm: For cross-platform terminal event handling and manipulation.
+*   **R**opey: An efficient text buffer (rope data structure) for robust text editing.
+*   **R**odio: For audio playback of sound effects.
+*   **A**nyhow: For simplified error handling.
 
 ## installation and usage
 
 To build and run clack-rs, you will need the Rust toolchain installed.
 
-1.  **clone the repository:**
+1.  **C**lone the repository:
     ```bash
     git clone https://github.com/your-username/clack # (if you named your repo 'clack')
     cd clack
     ```
 
-2.  **build and run:**
+2.  **B**uild and run:
     ```bash
     cargo run
     ```
@@ -50,27 +50,27 @@ To build and run clack-rs, you will need the Rust toolchain installed.
 
 ## keybindings
 
-*   **escape:** Quit the application.
-*   **F2:** Toggle focus mode (dims inactive lines).
-*   **F3 / control + t:** Toggle typewriter mode (keeps active line centered).
-*   **F4:** Toggle sound effects.
-*   **F5:** Cycle through available themes (dark, paper, retro).
-*   **control + s:** Save the current document.
-*   **arrow keys:** Navigate characters and lines.
-*   **backspace:** Delete previous character.
-*   **enter:** Insert a new line.
+*   **E**scape: Quit the application.
+*   **F2**: Toggle focus mode (dims inactive lines).
+*   **F3 / C**ontrol + t: Toggle typewriter mode (keeps active line centered).
+*   **F4**: Toggle sound effects.
+*   **F5**: Cycle through available themes (dark, paper, retro).
+*   **C**ontrol + s: Save the current document.
+*   **A**rrow keys: Navigate characters and lines.
+*   **B**ackspace: Delete previous character.
+*   **E**nter: Insert a new line.
 
 ## sound assets
 
 For the full audio experience, ensure you have your custom sound files in the `src/assets/` directory:
 
-*   `manual_key.wav` (for character input)
-*   `manual_space.wav` (for spacebar)
-*   `manual_backspace.wav` (for backspace)
-*   `manual_return.wav` (for enter key)
-*   `manual_bell.wav` (for end-of-line warning)
-*   `manual_load_long.wav` (for application startup)
-*   `manual_shift.wav` (for toggling features)
+*   `manual_key.wav` (**f**or character input)
+*   `manual_space.wav` (**f**or spacebar)
+*   `manual_backspace.wav` (**f**or backspace)
+*   `manual_return.wav` (**f**or enter key)
+*   `manual_bell.wav` (**f**or end-of-line warning)
+*   `manual_load_long.wav` (**f**or application startup)
+*   `manual_shift.wav` (**f**or toggling features)
 
 ## inspiration
 

@@ -52,5 +52,5 @@ temp-*
 /doc/html
 
 # Specific project files
-AGENTS.md          # As requested
+AGENTS.md          
 assets/*.wav.bak   # Backup copies of audio files

@@ -11,6 +11,7 @@ pub enum Sound {
     Ding,
     Startup,
     Toggle,
+    Feed, // Paper feed sound for page breaks
 }
 
 pub struct AudioEngine {
@@ -43,6 +44,7 @@ impl AudioEngine {
                                 include_bytes!("assets/manual_load_long.wav").as_ref()
                             }
                             Sound::Toggle => include_bytes!("assets/manual_shift.wav").as_ref(),
+                            Sound::Feed => include_bytes!("assets/manual_feed.wav").as_ref(),
                         };
 
                         let source = rodio::Decoder::new(std::io::Cursor::new(data)).unwrap();

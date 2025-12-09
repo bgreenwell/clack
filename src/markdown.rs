@@ -7,22 +7,36 @@ use ratatui::{
 pub fn parse_line(line: &str, theme: &Theme) -> Line<'static> {
     let raw = line.trim_end();
 
-    // Headers first
-
-    if raw.starts_with("# ") || raw.starts_with("## ") {
-        return Line::from(Span::styled(
-            raw.to_string(),
-            Style::default()
-                .fg(theme.accent)
-                .add_modifier(Modifier::BOLD),
-        ));
-    }
-
     let mut spans = Vec::new();
     let mut current_text = String::new();
     let mut chars = raw.chars().peekable();
 
-    let dim_style = Style::default().fg(theme.dim_text);
+    let dim_style = Style::default().fg(theme.guide_color);
+
+    // Headers first - similar to bold/italic with dimmed markup
+    if let Some(header_text) = raw.strip_prefix("## ") {
+        spans.push(Span::styled("## ", dim_style));
+        spans.push(Span::styled(
+            header_text.to_string(),
+            Style::default()
+                .fg(theme.base_fg)
+                .add_modifier(Modifier::BOLD),
+        ));
+        return Line::from(spans);
+    }
+
+    if let Some(header_text) = raw.strip_prefix("# ") {
+        spans.push(Span::styled("# ", dim_style));
+        spans.push(Span::styled(
+            header_text.to_string(),
+            Style::default()
+                .fg(theme.base_fg)
+                .add_modifier(Modifier::BOLD),
+        ));
+        return Line::from(spans);
+    }
+
+    // Reset spans for body text parsing
 
     while let Some(c) = chars.next() {
         match c {

@@ -3,9 +3,19 @@ name = "clack-rs"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "clack"
+path = "src/main.rs"
+
 [dependencies]
 ratatui = "0.26"
 crossterm = "0.27"
 ropey = "1.6"
 rodio = "0.17"
 anyhow = "1.0"
+
+[profile.release]
+strip = true        # Remove debug symbols
+lto = true          # Enable Link-Time Optimization
+opt-level = "z"     # Optimize for size
+codegen-units = 1   # Better optimization (slower compile)

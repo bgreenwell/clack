@@ -1,4 +1,5 @@
 mod app;
+mod config;
 mod markdown;
 mod sound;
 mod theme;
@@ -11,6 +12,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
+use sound::Sound;
 use std::io;
 use std::path::PathBuf;
 
@@ -34,7 +36,9 @@ fn main() -> anyhow::Result<()> {
                     app.file_path = Some(path.clone());
                     app.cursor_idx = 0; // Reset cursor for new file
                 }
-                Err(e) => eprintln!("Error loading file {}: {}", path.display(), e),
+                Err(e) => {
+                    app.set_error(format!("Failed to load {}: {e}", path.display()));
+                }
             }
         } else {
             app.file_path = Some(path.clone());
@@ -55,7 +59,7 @@ fn main() -> anyhow::Result<()> {
     terminal.show_cursor()?;
 
     if let Err(err) = res {
-        println!("{:?}", err)
+        println!("{err:?}")
     }
 
     Ok(())
@@ -78,32 +82,70 @@ fn run_app<B: ratatui::backend::Backend>(
                 KeyCode::F(2) => app.toggle_focus(),
                 KeyCode::F(4) => app.toggle_sound(),
                 KeyCode::F(5) => app.cycle_theme(),
+                KeyCode::F(6) => app.toggle_double_spacing(),
                 KeyCode::Char('s') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    match app.save_to_file() {
-                        Ok(_) => { /* Maybe a brief status message? */ }
-                        Err(e) => {
-                            /* Handle error, e.g., display in status bar */
-                            eprintln!("Error saving file: {}", e);
-                        }
+                    if let Err(e) = app.save_to_file() {
+                        app.set_error(format!("Failed to save: {e}"));
                     }
                 }
-                KeyCode::Enter => app.enter_key(),
-                KeyCode::Char(c) => app.insert_char(c),
-                KeyCode::Backspace => app.delete_char(),
+                KeyCode::Enter => {
+                    app.clear_status();
+                    app.enter_key();
+                    // Check if we crossed a page boundary and need to pause for feed sound
+                    if app.check_and_play_page_feed() {
+                        // Brief pause to let the mechanical "feed" action feel real
+                        std::thread::sleep(std::time::Duration::from_millis(
+                            app.config.typewriter.page_feed_pause_ms,
+                        ));
+                    }
+                }
+                KeyCode::Char(c) => {
+                    app.clear_status();
+                    app.insert_char(c);
+                    // Check if we crossed a page boundary while typing
+                    if app.check_and_play_page_feed() {
+                        std::thread::sleep(std::time::Duration::from_millis(
+                            app.config.typewriter.page_feed_pause_ms,
+                        ));
+                    }
+                }
+                KeyCode::Backspace => {
+                    app.clear_status();
+                    app.delete_char();
+                }
+                KeyCode::Delete => {
+                    app.clear_status();
+                    app.delete_char_forward();
+                }
 
                 // Simple Navigation
                 KeyCode::Left => {
-                    if app.cursor_idx > 0 {
+                    if key.modifiers.contains(KeyModifiers::CONTROL) {
+                        app.move_word_left();
+                    } else if app.cursor_idx > 0 {
                         app.cursor_idx -= 1;
                     }
                 }
                 KeyCode::Right => {
-                    if app.cursor_idx < app.content.len_chars() {
+                    if key.modifiers.contains(KeyModifiers::CONTROL) {
+                        app.move_word_right();
+                    } else if app.cursor_idx < app.content.len_chars() {
                         app.cursor_idx += 1;
                     }
                 }
                 KeyCode::Up => app.move_cursor_up(),
-                KeyCode::Down => app.move_cursor_down(),
+                KeyCode::Down => {
+                    let crossed_page = app.move_cursor_down();
+                    // Play sound and pause if we crossed a page boundary
+                    if crossed_page && app.sound_enabled {
+                        app.audio.trigger(Sound::Feed);
+                        std::thread::sleep(std::time::Duration::from_millis(
+                            app.config.typewriter.page_feed_pause_ms,
+                        ));
+                    }
+                }
+                KeyCode::Home => app.move_to_line_start(),
+                KeyCode::End => app.move_to_line_end(),
 
                 _ => {}
             }

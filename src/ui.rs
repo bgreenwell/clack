@@ -8,7 +8,11 @@ use ratatui::{
     Frame,
 };
 
-pub fn draw(f: &mut Frame, app: &App) {
+pub fn draw(f: &mut Frame, app: &mut App) {
+    // Get cached counts before borrowing theme (to avoid borrow checker issues)
+    let word_count = app.get_word_count();
+    let char_count = app.get_char_count();
+
     let theme = &app.theme;
 
     // Set the overall background color
@@ -40,15 +44,17 @@ pub fn draw(f: &mut Frame, app: &App) {
         .and_then(|n| n.to_str())
         .unwrap_or("Untitled.md");
 
+    let unsaved_indicator = if app.has_unsaved_changes { " *" } else { "" };
+
     let header_text = Line::from(vec![
         Span::styled(
             " Clack ",
             Style::default()
-                .bg(theme.accent)
-                .fg(Color::White)
+                .bg(theme.base_fg)
+                .fg(theme.base_bg)
                 .add_modifier(Modifier::BOLD),
         ),
-        Span::raw(format!(" {}", filename)),
+        Span::raw(format!(" {filename}{unsaved_indicator}")),
     ]);
     f.render_widget(
         Paragraph::new(header_text).style(Style::default().bg(theme.header_bg).fg(theme.header_fg)),
@@ -56,10 +62,10 @@ pub fn draw(f: &mut Frame, app: &App) {
     );
 
     // --- BODY (Text Area) ---
-    let target_text_width = 80;
-    let pad_left = 2;
-    let pad_right = 2;
-    let pad_top = 1;
+    let target_text_width = app.config.layout.text_width;
+    let pad_left = app.config.layout.pad_left;
+    let pad_right = app.config.layout.pad_right;
+    let pad_top = app.config.layout.pad_top;
 
     let paper_width = target_text_width + pad_left + pad_right + 2;
 
@@ -145,6 +151,38 @@ pub fn draw(f: &mut Frame, app: &App) {
             }
         }
 
+        // Add blank line for double spacing if enabled
+        if app.double_spacing {
+            visual_lines.push(Line::from(vec![]));
+        }
+
+        // Insert page break AFTER the last line of each page
+        // Check if the CURRENT line (i) is the last line of a page
+        if (i + 1) % app.config.typewriter.lines_per_page == 0 {
+            let next_page_number = ((i + 1) / app.config.typewriter.lines_per_page) + 1;
+            let label = format!(" Page {next_page_number} ");
+            let label_len = label.len();
+
+            // Calculate padding for centering
+            let total_width = effective_width;
+            let remaining_width = total_width.saturating_sub(label_len);
+            let left_padding = remaining_width / 2;
+            let right_padding = remaining_width - left_padding;
+
+            // Create centered separator: "─── Page X ───"
+            let left_bar = "─".repeat(left_padding);
+            let right_bar = "─".repeat(right_padding);
+            let separator_line = format!("{left_bar}{label}{right_bar}");
+
+            // Add blank line before, separator, and blank line after
+            visual_lines.push(Line::from(vec![])); // Blank line before
+            visual_lines.push(Line::from(vec![Span::styled(
+                separator_line,
+                Style::default().fg(theme.guide_color),
+            )]));
+            visual_lines.push(Line::from(vec![])); // Blank line after
+        }
+
         if i == cursor_row {
             let row_offset = cursor_col / effective_width;
             let col_offset = cursor_col % effective_width;
@@ -160,7 +198,9 @@ pub fn draw(f: &mut Frame, app: &App) {
     }
 
     // --- SCROLLING LOGIC ---
-    let inner_height = term_height.saturating_sub(2 + pad_top + 1);
+    let inner_height = term_height.saturating_sub(
+        2 + app.config.layout.pad_top as usize + app.config.layout.pad_bottom as usize,
+    );
     let center_line = inner_height / 2;
 
     let scroll_offset = if app.typewriter_mode {
@@ -171,21 +211,47 @@ pub fn draw(f: &mut Frame, app: &App) {
         }
     } else {
         let max_visible_row = inner_height.saturating_sub(1);
-        if visual_cursor_y >= scroll_state_val(visual_cursor_y, inner_height) + inner_height {
-            (visual_cursor_y - inner_height + 1) as u16
-        } else if visual_cursor_y > max_visible_row {
+        if visual_cursor_y > max_visible_row {
             (visual_cursor_y - max_visible_row) as u16
         } else {
             0
         }
     };
 
+    let border_type = if app.config.layout.fancy_borders {
+        ratatui::widgets::BorderType::Double
+    } else {
+        ratatui::widgets::BorderType::Plain
+    };
+
     let paper_block = Block::default()
-        .borders(Borders::LEFT | Borders::RIGHT)
-        .padding(Padding::new(pad_left, pad_right, pad_top as u16, 1))
+        .borders(Borders::ALL)
+        .border_type(border_type)
+        .padding(Padding::new(
+            pad_left,
+            pad_right,
+            pad_top,
+            app.config.layout.pad_bottom,
+        ))
         .style(Style::default().fg(theme.border).bg(theme.paper_bg));
 
     let inner_text_area = paper_block.inner(text_area);
+
+    // --- CURSOR RENDERING PREP ---
+    let render_row = visual_cursor_y as i16 - scroll_offset as i16;
+    let cursor_visual_y_start = text_area.y + 1 + app.config.layout.pad_top; // +1 for block's top border
+    let cursor_visual_x_start = text_area.x + 1 + app.config.layout.pad_left;
+
+    // Get character at cursor position BEFORE moving visual_lines
+    let char_at_cursor = if visual_cursor_y < visual_lines.len() {
+        visual_lines[visual_cursor_y]
+            .spans
+            .get(visual_cursor_x)
+            .and_then(|span| span.content.chars().next())
+            .unwrap_or(' ')
+    } else {
+        ' '
+    };
 
     let paragraph = Paragraph::new(visual_lines)
         .style(Style::default().fg(theme.base_fg).bg(theme.paper_bg))
@@ -194,73 +260,135 @@ pub fn draw(f: &mut Frame, app: &App) {
     f.render_widget(paper_block, text_area);
     f.render_widget(paragraph, inner_text_area);
 
-    // --- CURSOR RENDERING ---
-    let render_row = visual_cursor_y as i16 - scroll_offset as i16;
-    let visual_y_start = text_area.y + pad_top as u16;
-    let visual_x_start = text_area.x + 1 + pad_left;
+    // --- MARGIN GUIDE ---
+    if app.config.layout.show_margin_guide {
+        let margin_col = app.config.typewriter.bell_column;
+        if margin_col < effective_width {
+            let guide_x = cursor_visual_x_start + margin_col as u16;
+            let guide_style = Style::default().fg(theme.guide_color);
 
+            // Draw a subtle vertical line at the margin
+            for row in 0..inner_height {
+                let y = cursor_visual_y_start + row as u16;
+                if y < text_area.y + text_area.height {
+                    f.render_widget(
+                        Paragraph::new("┊").style(guide_style),
+                        Rect {
+                            x: guide_x,
+                            y,
+                            width: 1,
+                            height: 1,
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    // --- BLOCK CURSOR RENDERING ---
     if render_row >= 0 && render_row < inner_height as i16 {
-        f.set_cursor(
-            visual_x_start + visual_cursor_x as u16,
-            visual_y_start + render_row as u16,
+        let cursor_x = cursor_visual_x_start + visual_cursor_x as u16;
+        let cursor_y = cursor_visual_y_start + render_row as u16;
+
+        // Render block cursor with inverted colors
+        let cursor_block = Paragraph::new(char_at_cursor.to_string()).style(
+            Style::default()
+                .bg(theme.base_fg) // Invert: foreground color as background
+                .fg(theme.paper_bg), // Invert: paper color as foreground
+        );
+
+        f.render_widget(
+            cursor_block,
+            Rect {
+                x: cursor_x,
+                y: cursor_y,
+                width: 1,
+                height: 1,
+            },
         );
     }
 
     // --- FOOTER ---
-    let mode_status = if app.typewriter_mode { "ON" } else { "OFF" };
-    let focus_status = if app.focus_mode { "ON" } else { "OFF" };
-    let sound_status = if app.sound_enabled { "ON" } else { "OFF" };
-    let word_count = app.get_word_count();
-    let char_count = app.get_char_count();
+    let status_text = if let Some(ref msg) = app.status_message {
+        // Show status message if present
+        Line::from(vec![Span::styled(
+            format!(" {msg}"),
+            if msg.starts_with("Error:") {
+                Style::default().fg(theme.status_bad)
+            } else {
+                Style::default().fg(theme.status_ok)
+            },
+        )])
+    } else {
+        // Show normal status bar
+        let mode_status = if app.typewriter_mode { "ON" } else { "OFF" };
+        let focus_status = if app.focus_mode { "ON" } else { "OFF" };
+        let sound_status = if app.sound_enabled { "ON" } else { "OFF" };
+        let double_spacing_status = if app.double_spacing { "ON" } else { "OFF" };
+        let current_page = app.get_current_page();
 
-    let status_text = Line::from(vec![
-        Span::styled(" TW: ", Style::default().fg(theme.header_fg)),
-        Span::styled(
-            mode_status,
-            if app.typewriter_mode {
-                Style::default().fg(theme.status_ok)
-            } else {
-                Style::default().fg(theme.status_bad)
-            },
-        ),
-        Span::raw(" | "),
-        Span::styled(" FOC: ", Style::default().fg(theme.header_fg)),
-        Span::styled(
-            focus_status,
-            if app.focus_mode {
-                Style::default().fg(theme.status_ok)
-            } else {
-                Style::default().fg(theme.status_bad)
-            },
-        ),
-        Span::raw(" | "),
-        Span::styled(" SND: ", Style::default().fg(theme.header_fg)),
-        Span::styled(
-            sound_status,
-            if app.sound_enabled {
-                Style::default().fg(theme.status_ok)
-            } else {
-                Style::default().fg(theme.status_bad)
-            },
-        ),
-        Span::raw(" | "),
-        Span::styled(
-            format!("{} w / {} c", word_count, char_count),
-            Style::default().fg(theme.header_fg),
-        ),
-        Span::raw(" | "),
-        Span::styled(
-            "F2:Foc F3:TW F4:Snd F5:Thm",
-            Style::default().fg(theme.header_fg),
-        ),
-    ]);
+        Line::from(vec![
+            Span::styled(" TW: ", Style::default().fg(theme.header_fg)),
+            Span::styled(
+                mode_status,
+                if app.typewriter_mode {
+                    Style::default().fg(theme.status_ok)
+                } else {
+                    Style::default().fg(theme.status_bad)
+                },
+            ),
+            Span::raw(" | "),
+            Span::styled(" FOC: ", Style::default().fg(theme.header_fg)),
+            Span::styled(
+                focus_status,
+                if app.focus_mode {
+                    Style::default().fg(theme.status_ok)
+                } else {
+                    Style::default().fg(theme.status_bad)
+                },
+            ),
+            Span::raw(" | "),
+            Span::styled(" SND: ", Style::default().fg(theme.header_fg)),
+            Span::styled(
+                sound_status,
+                if app.sound_enabled {
+                    Style::default().fg(theme.status_ok)
+                } else {
+                    Style::default().fg(theme.status_bad)
+                },
+            ),
+            Span::raw(" | "),
+            Span::styled(" 2X: ", Style::default().fg(theme.header_fg)),
+            Span::styled(
+                double_spacing_status,
+                if app.double_spacing {
+                    Style::default().fg(theme.status_ok)
+                } else {
+                    Style::default().fg(theme.status_bad)
+                },
+            ),
+            Span::raw(" | "),
+            Span::styled(
+                format!("Page {current_page}"),
+                Style::default()
+                    .fg(theme.accent)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled(
+                format!("{word_count} w / {char_count} c"),
+                Style::default().fg(theme.header_fg),
+            ),
+            Span::raw(" | "),
+            Span::styled(
+                "F2:Foc F3:TW F4:Snd F5:Thm F6:2X",
+                Style::default().fg(theme.header_fg),
+            ),
+        ])
+    };
 
     f.render_widget(
         Paragraph::new(status_text).style(Style::default().bg(theme.header_bg).fg(theme.header_fg)),
         footer_area,
     );
-}
-
-fn scroll_state_val(_y: usize, _h: usize) -> usize {
-    0
 }

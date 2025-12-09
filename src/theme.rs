@@ -9,10 +9,11 @@ pub struct Theme {
     pub border: Color,
     pub header_bg: Color,
     pub header_fg: Color,
-    pub accent: Color,     // For "Clack" text, active toggles
-    pub dim_text: Color,   // For Focus Mode inactive lines
-    pub status_ok: Color,  // Green usually
-    pub status_bad: Color, // Red usually
+    pub accent: Color,      // For "Clack" text, active toggles
+    pub dim_text: Color,    // For Focus Mode inactive lines
+    pub guide_color: Color, // For margin guides and page breaks
+    pub status_ok: Color,   // Green usually
+    pub status_bad: Color,  // Red usually
 }
 
 impl Theme {
@@ -27,6 +28,7 @@ impl Theme {
             header_fg: Color::White,
             accent: Color::Blue,
             dim_text: Color::Rgb(50, 50, 50),
+            guide_color: Color::DarkGray,
             status_ok: Color::Green,
             status_bad: Color::Red,
         }
@@ -42,10 +44,11 @@ impl Theme {
             border: Color::Rgb(180, 170, 150),
             header_bg: Color::Rgb(238, 232, 213),
             header_fg: Color::Black,
-            accent: Color::Rgb(38, 139, 210),    // Cyan/Blueish
-            dim_text: Color::Rgb(200, 200, 190), // Dim version of black on cream
-            status_ok: Color::Rgb(133, 153, 0),  // Olive Green
-            status_bad: Color::Rgb(220, 50, 47), // Red
+            accent: Color::Rgb(38, 139, 210),       // Cyan/Blueish
+            dim_text: Color::Rgb(200, 200, 190),    // Dim version of black on cream
+            guide_color: Color::Rgb(220, 215, 190), // Subtle light gray for paper
+            status_ok: Color::Rgb(133, 153, 0),     // Olive Green
+            status_bad: Color::Rgb(220, 50, 47),    // Red
         }
     }
 
@@ -63,6 +66,7 @@ impl Theme {
             header_fg: amber,
             accent: amber,
             dim_text: dim_amber,
+            guide_color: Color::Rgb(80, 55, 0), // Dimmer, less saturated amber
             status_ok: amber,
             status_bad: Color::Red,
         }

@@ -64,6 +64,31 @@ impl App {
         app
     }
 
+    /// Create a new App instance for testing without initializing audio
+    #[cfg(test)]
+    fn new_for_test() -> Self {
+        let theme = Theme::light();
+        Self {
+            content: Rope::new(),
+            cursor_idx: 0,
+            typewriter_mode: true,
+            focus_mode: false,
+            sound_enabled: false,
+            double_spacing: false,
+            show_help: false,
+            audio: AudioEngine::new(false), // Disabled audio for tests
+            file_path: None,
+            current_theme_type: ThemeType::Light,
+            theme,
+            status_message: None,
+            config: Config::new(),
+            has_unsaved_changes: false,
+            last_page_number: 1,
+            cached_word_count: None,
+            cached_char_count: None,
+        }
+    }
+
     pub fn save_to_file(&mut self) -> io::Result<()> {
         let path = match &self.file_path {
             Some(p) => p.clone(),
@@ -406,7 +431,7 @@ mod tests {
 
     #[test]
     fn test_new_app_has_empty_content() {
-        let app = App::new();
+        let app = App::new_for_test();
         assert_eq!(app.content.len_chars(), 0);
         assert_eq!(app.cursor_idx, 0);
         assert!(!app.has_unsaved_changes);
@@ -414,7 +439,7 @@ mod tests {
 
     #[test]
     fn test_insert_char_increases_cursor() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('a');
         assert_eq!(app.cursor_idx, 1);
         assert_eq!(app.content.len_chars(), 1);
@@ -423,7 +448,7 @@ mod tests {
 
     #[test]
     fn test_insert_multiple_chars() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('h');
         app.insert_char('i');
         assert_eq!(app.cursor_idx, 2);
@@ -432,7 +457,7 @@ mod tests {
 
     #[test]
     fn test_delete_char_decreases_cursor() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('a');
         app.insert_char('b');
         app.delete_char();
@@ -442,7 +467,7 @@ mod tests {
 
     #[test]
     fn test_delete_char_at_start_does_nothing() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.delete_char();
         assert_eq!(app.cursor_idx, 0);
         assert_eq!(app.content.len_chars(), 0);
@@ -450,7 +475,7 @@ mod tests {
 
     #[test]
     fn test_enter_key_adds_newline() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('a');
         app.enter_key();
         app.insert_char('b');
@@ -460,7 +485,7 @@ mod tests {
 
     #[test]
     fn test_get_cursor_position_single_line() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('h');
         app.insert_char('i');
         let (col, row) = app.get_cursor_position();
@@ -470,7 +495,7 @@ mod tests {
 
     #[test]
     fn test_get_cursor_position_multiline() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('a');
         app.enter_key();
         app.insert_char('b');
@@ -482,13 +507,13 @@ mod tests {
 
     #[test]
     fn test_word_count_empty() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         assert_eq!(app.get_word_count(), 0);
     }
 
     #[test]
     fn test_word_count_single_word() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         for c in "hello".chars() {
             app.insert_char(c);
         }
@@ -497,7 +522,7 @@ mod tests {
 
     #[test]
     fn test_word_count_multiple_words() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         for c in "hello world test".chars() {
             app.insert_char(c);
         }
@@ -506,7 +531,7 @@ mod tests {
 
     #[test]
     fn test_char_count() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         for c in "hello".chars() {
             app.insert_char(c);
         }
@@ -515,7 +540,7 @@ mod tests {
 
     #[test]
     fn test_unsaved_changes_tracking() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         assert!(!app.has_unsaved_changes);
 
         app.insert_char('a');
@@ -531,7 +556,7 @@ mod tests {
 
     #[test]
     fn test_toggle_mode() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         assert!(app.typewriter_mode); // Now defaults to true
         app.toggle_mode();
         assert!(!app.typewriter_mode);
@@ -541,7 +566,7 @@ mod tests {
 
     #[test]
     fn test_toggle_focus() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         assert!(!app.focus_mode);
         app.toggle_focus();
         assert!(app.focus_mode);
@@ -551,7 +576,7 @@ mod tests {
 
     #[test]
     fn test_clear_status() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.set_error("test error".to_string());
         assert!(app.status_message.is_some());
         app.clear_status();
@@ -560,7 +585,7 @@ mod tests {
 
     #[test]
     fn test_move_cursor_up() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('a');
         app.enter_key();
         app.insert_char('b');
@@ -572,7 +597,7 @@ mod tests {
 
     #[test]
     fn test_move_cursor_down() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('a');
         app.enter_key();
         app.insert_char('b');
@@ -588,7 +613,7 @@ mod tests {
 
     #[test]
     fn test_move_to_line_start() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         for c in "hello world".chars() {
             app.insert_char(c);
         }
@@ -601,7 +626,7 @@ mod tests {
 
     #[test]
     fn test_move_to_line_end() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         for c in "hello world".chars() {
             app.insert_char(c);
         }
@@ -614,7 +639,7 @@ mod tests {
 
     #[test]
     fn test_move_word_right() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         for c in "hello world test".chars() {
             app.insert_char(c);
         }
@@ -631,7 +656,7 @@ mod tests {
 
     #[test]
     fn test_move_word_left() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         for c in "hello world test".chars() {
             app.insert_char(c);
         }
@@ -652,7 +677,7 @@ mod tests {
 
     #[test]
     fn test_delete_char_forward() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         for c in "abc".chars() {
             app.insert_char(c);
         }
@@ -666,7 +691,7 @@ mod tests {
 
     #[test]
     fn test_delete_forward_at_end() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         app.insert_char('a');
         // Cursor at end
         app.delete_char_forward();
@@ -676,13 +701,13 @@ mod tests {
 
     #[test]
     fn test_get_current_page_empty() {
-        let app = App::new();
+        let app = App::new_for_test();
         assert_eq!(app.get_current_page(), 1);
     }
 
     #[test]
     fn test_get_current_page_single_page() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         // Add 10 lines (well below 54), cursor at end
         for _ in 0..10 {
             app.enter_key();
@@ -693,7 +718,7 @@ mod tests {
 
     #[test]
     fn test_get_current_page_multiple_pages() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         // Add 54 lines, cursor ends up on line 54 (page 1)
         for _ in 0..54 {
             app.enter_key();
@@ -711,7 +736,7 @@ mod tests {
 
     #[test]
     fn test_page_follows_cursor() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         // Create 100 lines
         for _ in 0..100 {
             app.enter_key();
@@ -730,7 +755,7 @@ mod tests {
 
     #[test]
     fn test_page_feed_detection() {
-        let mut app = App::new();
+        let mut app = App::new_for_test();
         // Should be on page 1
         assert_eq!(app.last_page_number, 1);
 

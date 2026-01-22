@@ -1,4 +1,0 @@
-HELLO!
-
-ABC
-ABC

@@ -53,3 +53,5 @@ temp-*
 
 # Specific project files
 assets/*.wav.bak   # Backup copies of audio files
+output.md          # User-generated output files
+Untitled.md        # Default save file

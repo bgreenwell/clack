@@ -2,10 +2,14 @@
   <img src="assets/logo.png" alt="Clack Logo" width="600"/>
 </div>
 
+<div align="center">
+
 [![CI](https://img.shields.io/github/actions/workflow/status/bgreenwell/clack/ci.yml?style=for-the-badge)](https://github.com/bgreenwell/clack/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/clack-rs.svg?style=for-the-badge&color=%23107C41)](https://crates.io/crates/clack-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-%232196F3.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-%23D34516.svg?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+
+</div>
 
 Clack is a distraction-free terminal typewriter designed for fun and focused writing. It aims to provide a tactile and immersive writing experience through unique features and custom sound design, mimicking the feel of a classic typewriter.
 

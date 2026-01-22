@@ -37,12 +37,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     let footer_area = vertical_chunks[2];
 
     // --- HEADER ---
-    let filename = app
+    let filepath = app
         .file_path
         .as_ref()
-        .and_then(|p| p.file_name())
-        .and_then(|n| n.to_str())
-        .unwrap_or("Untitled.md");
+        .map(|p| p.display().to_string())
+        .unwrap_or_else(|| "Untitled.md".to_string());
 
     let unsaved_indicator = if app.has_unsaved_changes { " *" } else { "" };
 
@@ -50,11 +49,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         Span::styled(
             " Clack ",
             Style::default()
-                .bg(theme.base_fg)
-                .fg(theme.base_bg)
+                .bg(theme.header_fg)
+                .fg(theme.header_bg)
                 .add_modifier(Modifier::BOLD),
         ),
-        Span::raw(format!(" {filename}{unsaved_indicator}")),
+        Span::raw(format!(" {filepath}{unsaved_indicator}")),
     ]);
     f.render_widget(
         Paragraph::new(header_text).style(Style::default().bg(theme.header_bg).fg(theme.header_fg)),
@@ -381,7 +380,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             ),
             Span::raw(" | "),
             Span::styled(
-                "F2:Foc F3:TW F4:Snd F5:Thm F6:2X",
+                "F1:Help ^S:Save Esc:Quit",
                 Style::default().fg(theme.header_fg),
             ),
         ])
@@ -391,4 +390,101 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         Paragraph::new(status_text).style(Style::default().bg(theme.header_bg).fg(theme.header_fg)),
         footer_area,
     );
+
+    // --- HELP OVERLAY ---
+    if app.show_help {
+        draw_help_overlay(f, theme);
+    }
+}
+
+fn draw_help_overlay(f: &mut Frame, theme: &crate::theme::Theme) {
+    let size = f.size();
+
+    // Create centered modal dimensions
+    let modal_width = 60;
+    let modal_height = 18;
+    let modal_x = (size.width.saturating_sub(modal_width)) / 2;
+    let modal_y = (size.height.saturating_sub(modal_height)) / 2;
+
+    let modal_area = Rect {
+        x: modal_x,
+        y: modal_y,
+        width: modal_width,
+        height: modal_height,
+    };
+
+    // Create help content
+    let help_text = vec![
+        Line::from(vec![Span::styled(
+            "                    CLACK - HELP                    ",
+            Style::default()
+                .fg(theme.base_bg)
+                .bg(theme.accent)
+                .add_modifier(Modifier::BOLD),
+        )]),
+        Line::from(""),
+        Line::from(vec![Span::styled(
+            "  Keyboard shortcuts",
+            Style::default().add_modifier(Modifier::BOLD),
+        )]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("  F1", Style::default().fg(theme.accent)),
+            Span::raw("      Toggle this help menu"),
+        ]),
+        Line::from(vec![
+            Span::styled("  F2", Style::default().fg(theme.accent)),
+            Span::raw("      Toggle focus mode (dim inactive lines)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  F3", Style::default().fg(theme.accent)),
+            Span::raw("      Toggle typewriter mode (center line)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  F4", Style::default().fg(theme.accent)),
+            Span::raw("      Toggle sound effects"),
+        ]),
+        Line::from(vec![
+            Span::styled("  F5", Style::default().fg(theme.accent)),
+            Span::raw("      Cycle theme (Light/Dark/Retro)"),
+        ]),
+        Line::from(vec![
+            Span::styled("  F6", Style::default().fg(theme.accent)),
+            Span::raw("      Toggle double spacing"),
+        ]),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("  Ctrl+S", Style::default().fg(theme.accent)),
+            Span::raw("  Save file"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Ctrl+T", Style::default().fg(theme.accent)),
+            Span::raw("  Toggle typewriter mode"),
+        ]),
+        Line::from(vec![
+            Span::styled("  Esc", Style::default().fg(theme.accent)),
+            Span::raw("     Quit application"),
+        ]),
+    ];
+
+    // Render the modal with border
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(theme.border))
+        .style(Style::default().bg(theme.paper_bg).fg(theme.base_fg));
+
+    f.render_widget(block, modal_area);
+
+    // Render text inside the modal
+    let inner_area = Rect {
+        x: modal_area.x + 1,
+        y: modal_area.y + 1,
+        width: modal_area.width.saturating_sub(2),
+        height: modal_area.height.saturating_sub(2),
+    };
+
+    let paragraph =
+        Paragraph::new(help_text).style(Style::default().bg(theme.paper_bg).fg(theme.base_fg));
+
+    f.render_widget(paragraph, inner_area);
 }

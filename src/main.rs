@@ -75,6 +75,7 @@ fn run_app<B: ratatui::backend::Backend>(
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Esc => return Ok(()),
+                KeyCode::F(1) => app.toggle_help(),
                 KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     app.toggle_mode()
                 }

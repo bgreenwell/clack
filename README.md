@@ -102,15 +102,19 @@ For the best typewriter experience:
 - **Line spacing**: 1.2-1.4 (gives that classic typewritten look)
 - **Theme**: Use Clack's "Paper" theme (F5) with a cream-colored font for authenticity
 
-## keybindings
+## Keybindings
 
-### Application Controls
-*   **Escape:** Quit the application.
-*   **Ctrl + s:** Save the current document.
-*   **F2:** Toggle focus mode (dims inactive lines).
-*   **F3 / Ctrl + t:** Toggle typewriter mode (keeps active line centered).
-*   **F4:** Toggle sound effects.
-*   **F5:** Cycle through available themes (dark, paper, retro).
+### Quick reference
+*   **F1:** Show help menu with all keyboard shortcuts
+*   **Ctrl + S:** Save the current document
+*   **Escape:** Quit the application
+
+### Application controls (see F1 for full list)
+*   **F2:** Toggle focus mode (dims inactive lines)
+*   **F3 / Ctrl + T:** Toggle typewriter mode (keeps active line centered)
+*   **F4:** Toggle sound effects
+*   **F5:** Cycle through available themes (Dark, Paper, Retro)
+*   **F6:** Toggle double spacing
 
 ### Text Editing
 *   **Backspace:** Delete previous character.

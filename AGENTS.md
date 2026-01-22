@@ -62,10 +62,15 @@ Use the **Conventional Commits** format:
 ## 4. Architecture & File Structure
 
 *   **`src/main.rs`**: Application entry point. Handles terminal setup/teardown and the main event loop.
-*   **`src/app.rs`**: Core logic. Contains the `App` struct, state definitions (cursor, mode, content), and state mutation methods.
-*   **src/ui.rs**: View layer. Pure function of `App` state. Renders widgets using `ratatui`.
-*   **src/sound.rs**: Audio subsystem. Spawns a background thread for non-blocking sound playback.
+*   **`src/app.rs`**: Core logic. Contains the `App` struct, state definitions (cursor, mode, content, show_help), and state mutation methods.
+*   **src/ui.rs**: View layer. Pure function of `App` state. Renders widgets using `ratatui`. Includes help overlay modal.
+*   **src/sound.rs**: Audio subsystem. Spawns a background thread with pre-decoded audio sources and managed sinks for low-latency playback.
 *   **src/theme.rs**: Visual definitions for colors and styles.
+
+### Recent Architectural Improvements
+*   **Audio Performance**: Pre-decodes all WAV files at startup using `rodio::source::Buffered` to eliminate per-keystroke decoding overhead. Manages up to 10 concurrent audio sinks to prevent resource bottlenecks during fast typing.
+*   **Help System**: F1 toggles a modal overlay (src/ui.rs:draw_help_overlay) that displays all keybindings with theme-aware styling.
+*   **Header Display**: Shows full file path instead of just filename for better context. Uses reversed header colors for "Clack" branding to ensure readability across all themes.
 
 ## 5. Agent Interaction Protocol
 

@@ -13,6 +13,7 @@ pub struct App {
     pub focus_mode: bool,      // Toggle for dimming inactive lines
     pub sound_enabled: bool,   // Toggle for sound effects
     pub double_spacing: bool,  // Toggle for double spacing between lines
+    pub show_help: bool,       // Toggle for help overlay
     pub audio: AudioEngine,
     pub file_path: Option<PathBuf>,
     pub current_theme_type: ThemeType,
@@ -34,6 +35,7 @@ impl App {
             focus_mode: false,
             sound_enabled: true,
             double_spacing: false,
+            show_help: false,
             audio: AudioEngine::new(true),
             file_path: None,
             current_theme_type: ThemeType::Light,
@@ -109,6 +111,13 @@ impl App {
 
     pub fn toggle_double_spacing(&mut self) {
         self.double_spacing = !self.double_spacing;
+        if self.sound_enabled {
+            self.audio.trigger(Sound::Toggle);
+        }
+    }
+
+    pub fn toggle_help(&mut self) {
+        self.show_help = !self.show_help;
         if self.sound_enabled {
             self.audio.trigger(Sound::Toggle);
         }

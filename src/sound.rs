@@ -1,6 +1,10 @@
-use rodio::{OutputStream, Sink};
+use rodio::{source::Buffered, Decoder, OutputStream, Sink, Source};
+use std::io::Cursor;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
+
+// Type alias for our buffered audio source
+type BufferedSource = Buffered<Decoder<Cursor<&'static [u8]>>>;
 
 // Define the types of sounds we can play
 pub enum Sound {
@@ -14,6 +18,51 @@ pub enum Sound {
     Feed, // Paper feed sound for page breaks
 }
 
+// Pre-decoded audio sources for low-latency playback
+struct AudioSources {
+    key: BufferedSource,
+    space: BufferedSource,
+    backspace: BufferedSource,
+    return_key: BufferedSource,
+    ding: BufferedSource,
+    startup: BufferedSource,
+    toggle: BufferedSource,
+    feed: BufferedSource,
+}
+
+impl AudioSources {
+    fn new() -> Self {
+        // Helper function to decode and buffer a sound
+        fn load_sound(data: &'static [u8]) -> BufferedSource {
+            Decoder::new(Cursor::new(data)).unwrap().buffered()
+        }
+
+        Self {
+            key: load_sound(include_bytes!("assets/manual_key.wav")),
+            space: load_sound(include_bytes!("assets/manual_space.wav")),
+            backspace: load_sound(include_bytes!("assets/manual_backspace.wav")),
+            return_key: load_sound(include_bytes!("assets/manual_return.wav")),
+            ding: load_sound(include_bytes!("assets/manual_bell.wav")),
+            startup: load_sound(include_bytes!("assets/manual_load_long.wav")),
+            toggle: load_sound(include_bytes!("assets/manual_shift.wav")),
+            feed: load_sound(include_bytes!("assets/manual_feed.wav")),
+        }
+    }
+
+    fn get(&self, sound: &Sound) -> BufferedSource {
+        match sound {
+            Sound::Key => self.key.clone(),
+            Sound::Space => self.space.clone(),
+            Sound::Backspace => self.backspace.clone(),
+            Sound::Return => self.return_key.clone(),
+            Sound::Ding => self.ding.clone(),
+            Sound::Startup => self.startup.clone(),
+            Sound::Toggle => self.toggle.clone(),
+            Sound::Feed => self.feed.clone(),
+        }
+    }
+}
+
 pub struct AudioEngine {
     tx: Sender<Sound>,
 }
@@ -25,33 +74,37 @@ impl AudioEngine {
         if enabled {
             thread::spawn(move || {
                 // Initialize the default audio output stream
-                let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+                let (_stream, stream_handle) = match OutputStream::try_default() {
+                    Ok((stream, handle)) => (stream, handle),
+                    Err(e) => {
+                        eprintln!("Failed to initialize audio output stream: {e}. No sound will be played.");
+                        return;
+                    }
+                };
 
-                // Play startup sound immediately if requested (we'll trigger it from App::new)
-                // actually, we just wait for events.
+                // Pre-decode all audio sources at startup
+                let sources = AudioSources::new();
+
+                // Keep a collection of active sinks
+                // We'll maintain up to POOL_SIZE concurrent sounds
+                const POOL_SIZE: usize = 10;
+                let mut active_sinks: Vec<Sink> = Vec::with_capacity(POOL_SIZE);
 
                 for sound_type in rx {
-                    if let Ok(sink) = Sink::try_new(&stream_handle) {
-                        let data: &[u8] = match sound_type {
-                            Sound::Key => include_bytes!("assets/manual_key.wav").as_ref(),
-                            Sound::Space => include_bytes!("assets/manual_space.wav").as_ref(),
-                            Sound::Backspace => {
-                                include_bytes!("assets/manual_backspace.wav").as_ref()
-                            }
-                            Sound::Return => include_bytes!("assets/manual_return.wav").as_ref(),
-                            Sound::Ding => include_bytes!("assets/manual_bell.wav").as_ref(),
-                            Sound::Startup => {
-                                include_bytes!("assets/manual_load_long.wav").as_ref()
-                            }
-                            Sound::Toggle => include_bytes!("assets/manual_shift.wav").as_ref(),
-                            Sound::Feed => include_bytes!("assets/manual_feed.wav").as_ref(),
-                        };
+                    // Clean up finished sinks (ones that are empty)
+                    active_sinks.retain(|sink| !sink.empty());
 
-                        let source = rodio::Decoder::new(std::io::Cursor::new(data)).unwrap();
-
-                        sink.append(source);
-                        sink.detach(); // Fire and forget
+                    // If we have room for more sounds, play it
+                    if active_sinks.len() < POOL_SIZE {
+                        if let Ok(sink) = Sink::try_new(&stream_handle) {
+                            // Get the pre-decoded buffered source
+                            let source = sources.get(&sound_type);
+                            sink.append(source);
+                            active_sinks.push(sink);
+                        }
                     }
+                    // If we're at capacity, drop the sound to avoid lag
+                    // This prevents creating too many sinks during rapid typing
                 }
             });
         }

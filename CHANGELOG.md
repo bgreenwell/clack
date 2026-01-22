@@ -7,11 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- F1 help menu overlay showing all keyboard shortcuts
+- Full file path display in header (instead of just filename)
+
 ### Changed
 - Binary name changed from `clack-rs` to `clack` for cleaner command-line usage
 - Default save filename changed from `output.md` to `Untitled.md` to match header display
-- Improved header title contrast with inverted colors for better visibility
+- Header "Clack" branding now uses reversed header colors for better readability across all themes
+- Simplified footer to show only essential shortcuts (F1:Help, ^S:Save, Esc:Quit)
 - Default theme changed from Dark to Paper for a warmer, more authentic typewriter experience
+
+### Fixed
+- Audio lag during fast typing by pre-decoding WAV files and implementing sink management
+- "Clack" branding was invisible in Light theme (black-on-black)
+- Graceful handling when audio device is unavailable
 
 ### Added
 - Distraction-free terminal typewriter experience with Rust and ratatui

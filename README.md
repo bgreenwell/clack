@@ -1,8 +1,17 @@
-# Clack
+<div align="center">
+  <img src="assets/logo.png" alt="Clack Logo" width="600"/>
+</div>
+
+[![CI](https://img.shields.io/github/actions/workflow/status/bgreenwell/clack/ci.yml?style=for-the-badge)](https://github.com/bgreenwell/clack/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/clack-rs.svg?style=for-the-badge&color=%23107C41)](https://crates.io/crates/clack-rs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-%232196F3.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-%23D34516.svg?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 
 Clack is a distraction-free terminal typewriter designed for fun and focused writing. It aims to provide a tactile and immersive writing experience through unique features and custom sound design, mimicking the feel of a classic typewriter.
 
-![Clack Demo](demo.gif)
+![Clack Demo](assets/demo.gif)
+
+> **Note:** Sound is unfortunately unavailable in a GIF—and the sound is half the fun! Try Clack yourself to experience the full (simulated) mechanical typewriter effect.
 
 ## Warning
 
@@ -101,6 +110,34 @@ For the best typewriter experience:
 - **Font size**: 13-16pt (larger is more typewriter-like)
 - **Line spacing**: 1.2-1.4 (gives that classic typewritten look)
 - **Theme**: Use Clack's "Paper" theme (F5) with a cream-colored font for authenticity
+
+## Configuration
+
+Clack supports user configuration via a TOML file located at `~/.config/clack/config.toml`.
+
+### Example configuration
+
+```toml
+# Clack configuration file
+# Location: ~/.config/clack/config.toml
+
+# Theme: "Paper", "Dark", or "Retro"
+theme = "Paper"
+
+# Keep active line centered vertically
+typewriter_mode = true
+
+# Dim inactive lines for focus
+focus_mode = false
+
+# Enable sound effects
+sound_enabled = true
+
+# Enable double spacing between lines
+double_spacing = false
+```
+
+If no configuration file is found, Clack will use the default settings shown above.
 
 ## Keybindings
 

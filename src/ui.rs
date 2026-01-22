@@ -90,6 +90,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         1
     };
 
+    // Use bell_column for visual wrapping to match typewriter margin behavior
+    let wrap_width = app.config.typewriter.bell_column;
+
     // --- MANUAL WRAPPING & CURSOR MAPPING ---
     let (cursor_col, cursor_row) = app.get_cursor_position();
     let mut visual_lines: Vec<Line> = Vec::new();
@@ -137,7 +140,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             visual_lines.push(Line::from(vec![]));
         } else {
             for (c, style) in raw_chars {
-                if width_counter >= effective_width {
+                if width_counter >= wrap_width {
                     visual_lines.push(Line::from(current_spans));
                     current_spans = Vec::new();
                     width_counter = 0;
@@ -183,8 +186,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         }
 
         if i == cursor_row {
-            let row_offset = cursor_col / effective_width;
-            let col_offset = cursor_col % effective_width;
+            let row_offset = cursor_col / wrap_width;
+            let col_offset = cursor_col % wrap_width;
             let target_visual_row_idx = start_index + row_offset;
 
             if target_visual_row_idx >= visual_lines.len() {
@@ -262,11 +265,12 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     // --- MARGIN GUIDE ---
     if app.config.layout.show_margin_guide {
         let margin_col = app.config.typewriter.bell_column;
+        // Show guide only if it fits within the visible paper area
         if margin_col < effective_width {
             let guide_x = cursor_visual_x_start + margin_col as u16;
             let guide_style = Style::default().fg(theme.guide_color);
 
-            // Draw a subtle vertical line at the margin
+            // Draw a subtle vertical line at the margin (where wrapping occurs)
             for row in 0..inner_height {
                 let y = cursor_visual_y_start + row as u16;
                 if y < text_area.y + text_area.height {

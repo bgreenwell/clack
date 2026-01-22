@@ -2,6 +2,13 @@
 name = "clack-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["Brandon Greenwell"]
+description = "A distraction-free terminal typewriter with authentic mechanical sounds and typewriter mode"
+license = "MIT"
+repository = "https://github.com/bgreenwell/clack"
+readme = "README.md"
+keywords = ["terminal", "typewriter", "tui", "writing", "distraction-free"]
+categories = ["command-line-utilities", "text-editors"]
 
 [[bin]]
 name = "clack"
@@ -13,6 +20,8 @@ crossterm = "0.27"
 ropey = "1.6"
 rodio = "0.17"
 anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
 
 [profile.release]
 strip = true        # Remove debug symbols

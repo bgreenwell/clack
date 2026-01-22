@@ -62,15 +62,18 @@ Use the **Conventional Commits** format:
 ## 4. Architecture & File Structure
 
 *   **`src/main.rs`**: Application entry point. Handles terminal setup/teardown and the main event loop.
-*   **`src/app.rs`**: Core logic. Contains the `App` struct, state definitions (cursor, mode, content, show_help), and state mutation methods.
-*   **src/ui.rs**: View layer. Pure function of `App` state. Renders widgets using `ratatui`. Includes help overlay modal.
+*   **`src/app.rs`**: Core logic. Contains the `App` struct, state definitions (cursor, mode, content, show_help), and state mutation methods. Implements soft margin enforcement at column 72.
+*   **src/ui.rs**: View layer. Pure function of `App` state. Renders widgets using `ratatui`. Includes help overlay modal and visual text wrapping at margin guide (column 72).
 *   **src/sound.rs**: Audio subsystem. Spawns a background thread with pre-decoded audio sources and managed sinks for low-latency playback.
 *   **src/theme.rs**: Visual definitions for colors and styles.
+*   **src/config.rs**: Configuration system. Defines `LayoutConfig`, `TypewriterConfig`, and `UserPreferences`. Loads user settings from `~/.config/clack/config.toml`.
 
 ### Recent Architectural Improvements
 *   **Audio Performance**: Pre-decodes all WAV files at startup using `rodio::source::Buffered` to eliminate per-keystroke decoding overhead. Manages up to 10 concurrent audio sinks to prevent resource bottlenecks during fast typing.
 *   **Help System**: F1 toggles a modal overlay (src/ui.rs:draw_help_overlay) that displays all keybindings with theme-aware styling.
 *   **Header Display**: Shows full file path instead of just filename for better context. Uses reversed header colors for "Clack" branding to ensure readability across all themes.
+*   **User Configuration**: TOML-based config system allowing users to set defaults for theme, typewriter_mode, focus_mode, sound_enabled, and double_spacing. Config file is loaded from `~/.config/clack/config.toml` at startup.
+*   **Margin Enforcement**: Implements authentic typewriter behavior with soft margin at column 72. Blocks character insertion past the margin (plays bell), requiring Enter to continue. Visual wrapping in UI also enforces 72-character display width for consistent typewriter aesthetics.
 
 ## 5. Agent Interaction Protocol
 

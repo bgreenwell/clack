@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::{Config, UserPreferences};
 use crate::sound::{AudioEngine, Sound};
 use crate::theme::{Theme, ThemeType};
 use ropey::Rope;
@@ -28,18 +28,27 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
+        // Load user preferences from config file
+        let prefs = UserPreferences::load();
+        let theme_type = prefs.parse_theme();
+        let theme = match theme_type {
+            ThemeType::Dark => Theme::dark(),
+            ThemeType::Light => Theme::light(),
+            ThemeType::Retro => Theme::retro(),
+        };
+
         let app = Self {
             content: Rope::new(),
             cursor_idx: 0,
-            typewriter_mode: true, // Default to ON for better writing experience
-            focus_mode: false,
-            sound_enabled: true,
-            double_spacing: false,
+            typewriter_mode: prefs.typewriter_mode,
+            focus_mode: prefs.focus_mode,
+            sound_enabled: prefs.sound_enabled,
+            double_spacing: prefs.double_spacing,
             show_help: false,
-            audio: AudioEngine::new(true),
+            audio: AudioEngine::new(prefs.sound_enabled),
             file_path: None,
-            current_theme_type: ThemeType::Light,
-            theme: Theme::light(),
+            current_theme_type: theme_type,
+            theme,
             status_message: None,
             config: Config::new(),
             has_unsaved_changes: false,
@@ -136,6 +145,20 @@ impl App {
     }
 
     pub fn insert_char(&mut self, c: char) {
+        // Check margin before inserting character
+        let (_col, row) = self.get_cursor_position();
+        let line_len = self.content.line(row).len_chars();
+
+        // Soft margin: prevent typing past bell_column (like a real typewriter margin stop)
+        if line_len >= self.config.typewriter.bell_column {
+            // Play bell to indicate margin reached
+            if self.sound_enabled {
+                self.audio.trigger(Sound::Ding);
+            }
+            return; // Don't insert the character
+        }
+
+        // Insert the character
         self.content.insert_char(self.cursor_idx, c);
         self.cursor_idx += 1;
         self.has_unsaved_changes = true;
@@ -148,11 +171,9 @@ impl App {
                 self.audio.trigger(Sound::Key);
             }
 
-            // Bell Logic
-            let (_col, row) = self.get_cursor_position();
-            let line_len = self.content.line(row).len_chars();
-
-            if line_len == self.config.typewriter.bell_column {
+            // Bell warning when approaching margin
+            let new_line_len = self.content.line(row).len_chars();
+            if new_line_len == self.config.typewriter.bell_column {
                 self.audio.trigger(Sound::Ding);
             }
         }

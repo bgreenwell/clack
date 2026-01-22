@@ -1,0 +1,17 @@
+# Clack configuration file
+# Copy this to ~/.config/clack/config.toml to customize your settings
+
+# Theme: "Paper", "Dark", or "Retro"
+theme = "Paper"
+
+# Keep active line centered vertically (typewriter mode)
+typewriter_mode = true
+
+# Dim inactive lines for enhanced focus
+focus_mode = false
+
+# Enable mechanical typewriter sound effects
+sound_enabled = true
+
+# Enable double spacing between lines (manuscript style)
+double_spacing = false

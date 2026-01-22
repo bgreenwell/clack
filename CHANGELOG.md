@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-01-22
+
 ### Added
 - F1 help menu overlay showing all keyboard shortcuts
 - Full file path display in header (instead of just filename)
+- User configuration support via `~/.config/clack/config.toml` for persistent preferences
+- Configuration options: theme, typewriter_mode, focus_mode, sound_enabled, double_spacing
+- Soft margin enforcement at column 72 (blocks typing past margin like authentic typewriter)
+- Visual text wrapping at column 72 for consistent typewriter aesthetics
+- Demo GIF showcasing Clack features in README
 
 ### Changed
 - Binary name changed from `clack-rs` to `clack` for cleaner command-line usage
@@ -17,10 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Header "Clack" branding now uses reversed header colors for better readability across all themes
 - Simplified footer to show only essential shortcuts (F1:Help, ^S:Save, Esc:Quit)
 - Default theme changed from Dark to Paper for a warmer, more authentic typewriter experience
+- All text now wraps visually at column 72 (bell_column) instead of window width
+- Margin guide at column 72 now enforces soft wrap behavior (bell rings, typing blocked until Enter)
 
 ### Fixed
 - Audio lag during fast typing by pre-decoding WAV files and implementing sink management
-- "Clack" branding was invisible in Light theme (black-on-black)
+- "Clack" header was invisible in Light theme (black-on-black)
 - Graceful handling when audio device is unavailable
 
 ### Added
